@@ -26,18 +26,6 @@ module Facebook
     end
   end
 
-  class RailsFacebookResponse
-    def initialize(app)
-      @app = app
-    end
-    def redirect(url)
-      @app.redirect_to(url)
-    end
-    def body(msg)
-      @app.render :text => msg
-    end
-  end
-
   module Rails
     def self.included(controller)
       if controller.respond_to?(:helper_method)
