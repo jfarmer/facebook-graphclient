@@ -5,6 +5,7 @@ end
 require 'digest/md5'
 require 'yajl'
 require 'patron'
+require 'rack'
 
 module Facebook
   GRAPH_URL = 'http://graph.facebook.com'
