@@ -47,12 +47,15 @@ module Facebook
 
       query_string = '?' + query_params.map { |k,v| "#{k}=#{v}" }.join("&") unless query_params.empty?
 
+      tries = 0
       begin
         raw_response = @session.send(action, GRAPH_URL + method + query_string)
       rescue Patron::HostResolutionError
-        retry
+        retry if tries < 5
+        tries += 1
       rescue Patron::ConnectionFailed
-        retry
+        retry if tries < 5
+        tries += 1
       end
 
       # TODO: Handle photo requests, which return photo data and not JSON
@@ -80,12 +83,15 @@ module Facebook
 
       query_string = '?' + query_params.map { |k,v| "#{k}=#{v}" }.join("&") unless query_params.empty?
 
+      tries = 0
       begin
         raw_response = @session.get("https://api.facebook.com/method/fql.query" + query_string)
       rescue Patron::HostResolutionError
-        retry
+        retry if tries < 5
+        tries += 1
       rescue Patron::ConnectionFailed
-        retry
+        retry if tries < 5
+        tries += 1
       end
 
       response = Yajl::Parser.parse(raw_response.body)
