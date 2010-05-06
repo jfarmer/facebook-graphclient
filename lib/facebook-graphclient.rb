@@ -12,11 +12,12 @@ module Facebook
 
   class GraphClient
 
-    attr_reader :secret, :app_id
+    attr_reader :secret, :app_id, :api_key
     attr_accessor :access_token
 
     def initialize facebook_settings = {}
       @app_id       = facebook_settings[:app_id]
+      @api_key      = facebook_settings[:api_key]
       @secret       = facebook_settings[:secret]
 
       @cookie = get_user_cookie facebook_settings[:cookies]
@@ -50,10 +51,7 @@ module Facebook
       tries = 0
       begin
         raw_response = @session.send(action, GRAPH_URL + method + query_string)
-      rescue Patron::HostResolutionError
-        retry if tries < 5
-        tries += 1
-      rescue Patron::ConnectionFailed
+      rescue Patron::HostResolutionError, Patron::ConnectionFailed
         retry if tries < 5
         tries += 1
       end
@@ -86,10 +84,7 @@ module Facebook
       tries = 0
       begin
         raw_response = @session.get("https://api.facebook.com/method/fql.query" + query_string)
-      rescue Patron::HostResolutionError
-        retry if tries < 5
-        tries += 1
-      rescue Patron::ConnectionFailed
+      rescue Patron::HostResolutionError, Patron::ConnectionFailed
         retry if tries < 5
         tries += 1
       end
@@ -121,7 +116,7 @@ module Facebook
         end
       end
 
-      @params
+      @is_valid
     end
 
     def [] k

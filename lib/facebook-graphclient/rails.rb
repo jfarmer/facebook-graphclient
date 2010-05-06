@@ -17,7 +17,7 @@ module Facebook
       instance_eval(&blk)
       include Facebook::Rails
     end
-    %w[ secret app_id access_token ].each do |param|
+    %w[ secret app_id api_key access_token ].each do |param|
       class_eval %[
         def #{param} val, &blk
           facebook_settings[:#{param}] = val
