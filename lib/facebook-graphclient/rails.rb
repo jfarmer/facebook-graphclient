@@ -34,7 +34,7 @@ module Facebook
     end
     def facebook
       unless request.env['facebook.helper']
-        fb = Facebook::GraphClient.new(self.class.facebook_settings.merge(:cookies => request.cookies))
+        fb = Facebook::GraphClient.new(self.class.facebook_settings.merge(:cookies => cookies))
         env['facebook.helper'] = fb
       end
 
