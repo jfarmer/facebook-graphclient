@@ -60,7 +60,8 @@ module Facebook
 
       if raw_response.headers['Content-Type'] =~ /text\/javascript/
         # We have JSON
-        response = Yajl::Parser.parse(raw_response.body)
+        json = ["false", '', nil].include?(raw_response.body) ? '{}' : raw_response.body
+        response = Yajl::Parser.parse(json)
 
         if e = response['error']
           error = FacebookError.new(e['message'])
@@ -89,7 +90,8 @@ module Facebook
         tries += 1
       end
 
-      response = Yajl::Parser.parse(raw_response.body)
+      json = ["false", '', nil].include?(raw_response.body) ? '{}' : raw_response.body
+      response = Yajl::Parser.parse(json)
 
       if e = response.first['error']
         error = FacebookError.new(e['message'])
