@@ -8,7 +8,7 @@ require 'patron'
 require 'rack'
 
 module Facebook
-  GRAPH_URL = 'http://graph.facebook.com'
+  GRAPH_URL = 'https://graph.facebook.com'
 
   class GraphClient
 
