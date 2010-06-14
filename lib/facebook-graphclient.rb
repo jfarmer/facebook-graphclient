@@ -9,6 +9,7 @@ require 'rack'
 
 module Facebook
   GRAPH_URL = 'https://graph.facebook.com'
+  API_URL   = 'https://api.facebook.com/method/'
 
   class GraphClient
 
@@ -21,9 +22,7 @@ module Facebook
       @secret       = facebook_settings[:secret]
 
       @cookie = get_user_cookie facebook_settings[:cookies]
-
       @access_token = facebook_settings[:access_token] || @cookie['access_token']
-
       @session = Patron::Session.new
     end
 
@@ -43,10 +42,10 @@ module Facebook
       ]
     end
 
-    def api action, method, query_params = nil
+    def api action, method, query_params = {}
       query_params[:access_token] ||= @access_token
-
       query_string = '?' + query_params.map { |k,v| "#{k}=#{v}" }.join("&") unless query_params.empty?
+      query_string ||= ''
 
       tries = 0
       begin
@@ -127,6 +126,66 @@ module Facebook
 
     def params
       valid? ? @params : {}
+    end
+
+    def rest(method, opts = {})
+      if method == 'photos.upload'
+        image = opts.delete :image
+      end
+
+      opts = { :api_key => self.api_key,
+               :call_id => Time.now.to_f,
+               :format => 'JSON',
+               :v => '1.0',
+               :access_token => @access_token,
+               :session_key => %w[ photos.upload ].include?(method) ? nil : params[:session_key],
+               :method => method }.merge(opts)
+
+      args = opts.map{ |k,v|
+                       next nil unless v
+
+                       "#{k}=" + case v
+                                 when Hash
+                                   Yajl::Encoder.encode(v)
+                                 when Array
+                                   if k == :tags
+                                     Yajl::Encoder.encode(v)
+                                   else
+                                     v.join(',')
+                                   end
+                                 else
+                                   v.to_s
+                                 end
+                     }.compact.sort
+
+      sig = Digest::MD5.hexdigest(args.join+self.secret)
+
+      if method == 'photos.upload'
+        data = MimeBoundary
+        data += opts.merge(:sig => sig).inject('') do |buf, (key, val)|
+          if val
+            buf << (MimePart % [key, val])
+          else
+            buf
+          end
+        end
+        data += MimeImage % ['upload.jpg', 'jpg', image.respond_to?(:read) ? image.read : image]
+      else
+        data = Array["sig=#{sig}", *args.map{|a| a.gsub('&','%26') }].join('&')
+      end
+
+      raw_response = @session.post(API_URL + method, data)
+
+      json = ["false", '', nil].include?(raw_response.body) ? '{}' : raw_response.body
+      response = Yajl::Parser.parse(json)
+
+      if response.is_a?(Hash) and response.has_key?('error_code')
+        error = FacebookError.new(response['error_msg'])
+        error.data = response
+        raise error
+      else
+        response
+      end
     end
   end
 end
