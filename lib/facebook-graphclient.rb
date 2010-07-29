@@ -171,7 +171,7 @@ module Facebook
         end
         data += MimeImage % ['upload.jpg', 'jpg', image.respond_to?(:read) ? image.read : image]
       else
-        data = Array["sig=#{sig}", *args.map{|a| a.gsub('&','%26') }].join('&')
+        data = Array["sig=#{sig}", *args.map{|a| a.gsub('&','%26').gsub('+','%2B') }].join('&')
       end
 
       raw_response = @session.post(API_URL + method, data)
