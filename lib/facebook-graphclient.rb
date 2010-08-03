@@ -28,6 +28,7 @@ module Facebook
 
     def get_user_cookie cookies
       if cookies and cookie = cookies["fbs_#{@app_id}"]
+        cookie = cookie[1..-2] if cookie[0..0] == '"'
         Rack::Utils.parse_nested_query(cookie)
       else
         {}
@@ -104,7 +105,7 @@ module Facebook
     def valid?
       return false if @cookie.nil?
 
-      unless @is_valid
+      if @is_valid.nil?
         vars = @cookie.dup
 
         good_sig = vars.delete 'sig'
